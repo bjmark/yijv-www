@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一句一句 · 技术支持</title>
+  <meta name="description" content="一句一句 App 技术支持页面" />
+  <style>
+    :root {
+      --bg: #0b1414;
+      --panel: #102020;
+      --text: #f2f2ea;
+      --muted: #9fb1ab;
+      --accent: #7fc8b2;
+      --line: rgba(255,255,255,0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.75;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 72px 24px 96px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 40px 28px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0 0 32px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .quote {
+      margin: 0 0 28px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    p {
+      margin: 0 0 18px;
+      font-size: 17px;
+    }
+
+    .section-title {
+      margin-top: 28px;
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+    }
+
+    .contact {
+      margin-top: 8px;
+      padding: 18px 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        padding: 40px 16px 64px;
+      }
+
+      .card {
+        padding: 28px 20px;
+        border-radius: 16px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .quote {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>一句一句</h1>
+      <p class="subtitle">技术支持 / Support</p>
+
+      <p class="quote">有时候，一句话就够了。</p>
+
+      <p>
+        「一句一句」是一个用一句话连接彼此的地方。
+      </p>
+      <p>
+        你可以写下一句，也可以接续别人的一句。
+      </p>
+      <p>
+        如果你在使用过程中遇到问题，或有任何建议，欢迎联系我。
+      </p>
+
+      <div class="section-title">联系方式</div>
+      <div class="contact">
+        <p>
+          邮箱：
+          <a href="mailto:bjmark@sina.com">bjmark@sina.com</a>
+        </p>
+      </div>
+
+      <div class="section-title">说明</div>
+      <p>
+        如果来信与 App 使用问题、Bug 反馈、功能建议或上架审核相关，请尽量写清楚设备型号、系统版本和问题描述。
+      </p>
+
+      <p class="footer">
+        © 一句一句
+      </p>
+    </section>
+  </main>
+</body>
+</html>
