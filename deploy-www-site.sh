@@ -9,14 +9,15 @@ LOCAL_SITE_DIR="${LOCAL_SITE_DIR:-.}"
 REMOTE_SITE_DIR="${REMOTE_SITE_DIR:-/var/www/yijv_www}"
 CERT_DIR="${CERT_DIR:-/etc/letsencrypt/live/${APEX_DOMAIN}}"
 
-if [[ ! -f "/index.html" ]]; then
-  echo "missing /index.html" >&2
+if [[ ! -f "${LOCAL_SITE_DIR}/index.html" ]]; then
+  echo "missing ${LOCAL_SITE_DIR}/index.html" >&2
   exit 1
 fi
 
 TMP_TAR="$(mktemp)"
 trap 'rm -f "${TMP_TAR}"' EXIT
-tar -C "" -cf "" .
+
+tar -C "${LOCAL_SITE_DIR}" -cf "${TMP_TAR}" .
 scp "${TMP_TAR}" "${SERVER_HOST}:/tmp/yijv_www_site.tar"
 
 ssh "${SERVER_HOST}" \
