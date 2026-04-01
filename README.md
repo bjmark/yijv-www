@@ -60,6 +60,21 @@ Then run the deploy script from this repository root:
 ./deploy-www-site.sh
 ```
 
+## GitHub Actions Auto Deploy
+
+This repository also includes a GitHub Actions workflow at
+`.github/workflows/deploy.yml`. It deploys automatically on every push to
+`main`, and it can also be run manually from the GitHub Actions tab.
+
+Configure these repository secrets before enabling it:
+
+- `YIJV_SERVER_HOST`: server hostname or IP, for example `154.8.138.104`
+- `YIJV_SERVER_USER`: SSH user, for example `ubuntu`
+- `YIJV_SERVER_SSH_KEY`: private SSH key that can log into the server
+
+The server-side key should be authorized for SSH login, and the server itself
+must still be able to pull `git@github.com:bjmark/yijv-www.git`.
+
 ## Optional Environment Variables
 
 You can override the defaults when needed:

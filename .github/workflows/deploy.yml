@@ -1,0 +1,38 @@
+name: Deploy Site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.YIJV_SERVER_SSH_KEY }}
+
+      - name: Trust server host key
+        env:
+          SERVER_HOST: ${{ secrets.YIJV_SERVER_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          YIJV_SERVER_HOST: ${{ secrets.YIJV_SERVER_USER }}@${{ secrets.YIJV_SERVER_HOST }}
+          YIJV_APEX_DOMAIN: yijvyijv.site
+          YIJV_WWW_DOMAIN: www.yijvyijv.site
+          YIJV_HTTPS_UPSTREAM_PORT: "3000"
+          REPO_DIR: /home/ubuntu/repos/YiJv-www
+          BRANCH: main
+          REMOTE_SITE_DIR: /var/www/yijv_www
+        run: ./deploy-www-site.sh
