@@ -94,6 +94,66 @@
       display: none;
     }
 
+    .help-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(17, 17, 17, 0.35);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.16s ease, visibility 0.16s ease;
+    }
+
+    .help-modal.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .help-dialog {
+      width: min(560px, 100%);
+      max-height: min(80vh, 680px);
+      overflow: auto;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+    }
+
+    .help-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .help-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .help-close {
+      flex-shrink: 0;
+    }
+
+    .help-body {
+      display: grid;
+      gap: 14px;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .help-body p {
+      margin: 0;
+    }
+
     .section {
       margin-bottom: 28px;
       padding: 22px;
@@ -216,6 +276,15 @@
         min-height: 56px;
         font-size: 18px;
       }
+
+      .help-modal {
+        padding: 16px;
+      }
+
+      .help-dialog {
+        padding: 20px;
+        border-radius: 20px;
+      }
     }
   </style>
 </head>
@@ -230,6 +299,7 @@
       <button id="new-game-button" type="button">新的一局</button>
       <button id="replay-button" type="button">重玩</button>
       <button id="clear-selection-button" type="button">清空选择</button>
+      <button id="help-button" type="button">说明</button>
       <button id="install-button" class="install-button" type="button">安装应用</button>
     </div>
 
@@ -243,6 +313,23 @@
 
     <p class="footer-note">直接打开文件即可游玩。若通过本地静态服务访问，还可以安装为应用。安装后通常可在 Launchpad、应用程序或 Dock 中找到。</p>
   </main>
+
+  <div id="help-modal" class="help-modal is-hidden" aria-hidden="true">
+    <div class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="help-header">
+        <h2 id="help-title" class="help-title">玩法说明</h2>
+        <button id="help-close-button" class="help-close" type="button" aria-label="关闭说明">关闭</button>
+      </div>
+      <div class="help-body">
+        <p>目标是把碎片池里的数字和符号重新拼成正确的算式。</p>
+        <p>每次请按顺序选择 4 个碎片，组成「数字 运算符 数字 结果」，例如「3 + 4 7」。</p>
+        <p>只有能组成正确算式的选择才会被消除；如果拼错，这次选择会被清空。</p>
+        <p>点「新的一局」会生成新的题目，点「重玩」会回到这一局初始状态，点「清空选择」会取消当前选择。</p>
+        <p>已经拼好的算式可以点一下撤销，重新放回碎片池。</p>
+        <p>如果通过浏览器访问这个页面，还可以安装成应用，之后像普通 App 一样打开。</p>
+      </div>
+    </div>
+  </div>
 
   <script>
     const GAME_SIZE = 4;
@@ -264,8 +351,23 @@
       newGameButton: document.getElementById("new-game-button"),
       replayButton: document.getElementById("replay-button"),
       clearSelectionButton: document.getElementById("clear-selection-button"),
-      installButton: document.getElementById("install-button")
+      helpButton: document.getElementById("help-button"),
+      installButton: document.getElementById("install-button"),
+      helpModal: document.getElementById("help-modal"),
+      helpCloseButton: document.getElementById("help-close-button")
     };
+
+    function openHelpModal() {
+      elements.helpModal.classList.remove("is-hidden");
+      elements.helpModal.setAttribute("aria-hidden", "false");
+      elements.helpCloseButton.focus();
+    }
+
+    function closeHelpModal() {
+      elements.helpModal.classList.add("is-hidden");
+      elements.helpModal.setAttribute("aria-hidden", "true");
+      elements.helpButton.focus();
+    }
 
     function shuffle(array) {
       const copy = [...array];
@@ -770,7 +872,19 @@
       clearSelection();
       setMessage("已清空当前选择。");
     });
+    elements.helpButton.addEventListener("click", openHelpModal);
+    elements.helpCloseButton.addEventListener("click", closeHelpModal);
+    elements.helpModal.addEventListener("click", (event) => {
+      if (event.target === elements.helpModal) {
+        closeHelpModal();
+      }
+    });
     elements.installButton.addEventListener("click", handleInstallClick);
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !elements.helpModal.classList.contains("is-hidden")) {
+        closeHelpModal();
+      }
+    });
 
     startNewGame();
     registerServiceWorker();
