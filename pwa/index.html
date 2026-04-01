@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="把被打散的数字和符号，重新拼成正确式子的轻量思考小游戏。">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg">
+  <title>一算一算</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111111;
+      --muted: #6f6f6f;
+      --line: #d9d9d9;
+      --line-strong: #b5b5b5;
+      --surface: #f6f6f6;
+      --surface-strong: #efefef;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "PingFang SC", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    .page {
+      width: min(880px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 56px 0 72px;
+    }
+
+    .header {
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.12s ease, background-color 0.12s ease;
+    }
+
+    button:hover {
+      border-color: var(--line-strong);
+      background: var(--surface);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      color: var(--muted);
+      border-color: var(--line);
+      background: transparent;
+    }
+
+    .install-button.is-available {
+      border-color: var(--text);
+    }
+
+    .install-button.is-hidden {
+      display: none;
+    }
+
+    .section {
+      margin-bottom: 28px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+
+    .pool {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .pool-section {
+      display: grid;
+      gap: 14px;
+    }
+
+    .cleared-rows {
+      display: grid;
+      gap: 12px;
+    }
+
+    .cleared-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .token {
+      width: 100%;
+      min-height: 64px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--text);
+      font-size: 20px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+    }
+
+    .token:hover {
+      border-color: var(--line-strong);
+      background: var(--surface);
+    }
+
+    .token.selected {
+      border-color: var(--text);
+      background: var(--surface-strong);
+    }
+
+    .token.removed {
+      display: none;
+    }
+
+    .token.static {
+      cursor: default;
+    }
+
+    .token.static:hover {
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .token.success-row {
+      border-color: var(--text);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .token.success-row:hover {
+      border-color: var(--text);
+      background: var(--surface);
+    }
+
+    .cleared-row.is-clickable {
+      cursor: pointer;
+    }
+
+    .cleared-row.is-clickable:hover .token.success-row {
+      border-color: #000000;
+      background: #f1f1f1;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100% - 20px, 100%);
+        padding-top: 28px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .section {
+        padding: 18px;
+        border-radius: 16px;
+      }
+
+      .token {
+        min-height: 56px;
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1>一算一算</h1>
+      <p class="subtitle">把被打散的数字和符号，重新拼成正确的式子。</p>
+    </header>
+
+    <div class="toolbar">
+      <button id="new-game-button" type="button">新的一局</button>
+      <button id="replay-button" type="button">重玩</button>
+      <button id="clear-selection-button" type="button">清空选择</button>
+      <button id="install-button" class="install-button" type="button">安装应用</button>
+    </div>
+
+    <section class="section">
+      <h2 class="section-title">碎片池</h2>
+      <div class="pool-section">
+        <div id="cleared-rows" class="cleared-rows"></div>
+        <div id="pool" class="pool"></div>
+      </div>
+    </section>
+
+    <p class="footer-note">直接打开文件即可游玩。若通过本地静态服务访问，还可以安装为应用。安装后通常可在 Launchpad、应用程序或 Dock 中找到。</p>
+  </main>
+
+  <script>
+    const GAME_SIZE = 4;
+    const OPERATORS = ["+", "-", "*", "/"];
+
+    const state = {
+      equations: [],
+      initialTokenPool: [],
+      tokenPool: [],
+      selectedTokenIds: [],
+      clearedExpressions: [],
+      deferredInstallPrompt: null,
+      isInstalledApp: false
+    };
+
+    const elements = {
+      clearedRows: document.getElementById("cleared-rows"),
+      pool: document.getElementById("pool"),
+      newGameButton: document.getElementById("new-game-button"),
+      replayButton: document.getElementById("replay-button"),
+      clearSelectionButton: document.getElementById("clear-selection-button"),
+      installButton: document.getElementById("install-button")
+    };
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function evaluateExpression(left, operator, right) {
+      if (operator === "+") {
+        return left + right;
+      }
+      if (operator === "-") {
+        return left - right;
+      }
+      if (operator === "/") {
+        return left / right;
+      }
+      return left * right;
+    }
+
+    function equationToText(equation) {
+      return `${equation.a} ${equation.operator} ${equation.b} = ${equation.c}`;
+    }
+
+    function getTokenValues(tokenIds) {
+      return tokenIds
+        .map((tokenId) => getTokenById(tokenId))
+        .filter(Boolean)
+        .map((token) => token.value);
+    }
+
+    function createClearedRow(tokenIds) {
+      return {
+        id: `cleared-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        tokenIds: [...tokenIds],
+        values: getTokenValues(tokenIds)
+      };
+    }
+
+    function hasDistinctNumbers(a, b, c) {
+      return a !== b && a !== c && b !== c;
+    }
+
+    function usesAnyTakenNumber(usedNumbers, a, b, c) {
+      return usedNumbers.has(a) || usedNumbers.has(b) || usedNumbers.has(c);
+    }
+
+    function buildConflictKeySet(equations) {
+      const conflictKeys = new Set();
+
+      equations.forEach((equation) => {
+        const baseKey = `${equation.a}|${equation.operator}|${equation.b}|${equation.c}`;
+        conflictKeys.add(baseKey);
+
+        // 避免把加法题和它的反向减法题同时放进同一局，减少明显歧义。
+        if (equation.operator === "+") {
+          conflictKeys.add(`${equation.c}|-|${equation.b}|${equation.a}`);
+          conflictKeys.add(`${equation.c}|-|${equation.a}|${equation.b}`);
+        }
+
+        if (equation.operator === "-") {
+          conflictKeys.add(`${equation.c}|+|${equation.b}|${equation.a}`);
+        }
+      });
+
+      return conflictKeys;
+    }
+
+    function createEquation(operator, usedTexts, usedFingerprints, conflictKeys, usedNumbers) {
+      let attempts = 0;
+
+      while (attempts < 400) {
+        attempts += 1;
+        let a = 0;
+        let b = 0;
+        let c = 0;
+
+        if (operator === "+") {
+          a = randomInt(1, 18);
+          b = randomInt(1, 18);
+          c = a + b;
+          if (c > 30) {
+            continue;
+          }
+        } else if (operator === "-") {
+          a = randomInt(4, 20);
+          b = randomInt(1, a - 1);
+          c = a - b;
+        } else if (operator === "/") {
+          b = randomInt(2, 9);
+          c = randomInt(2, 9);
+          a = b * c;
+          if (a > 81) {
+            continue;
+          }
+        } else {
+          a = randomInt(2, 9);
+          b = randomInt(2, 9);
+          c = a * b;
+          if (c > 81) {
+            continue;
+          }
+        }
+
+        const text = `${a}${operator}${b}=${c}`;
+        const fingerprint = [String(a), operator, String(b), String(c)].join("|");
+
+        if (
+          !hasDistinctNumbers(a, b, c) ||
+          usesAnyTakenNumber(usedNumbers, a, b, c) ||
+          usedTexts.has(text) ||
+          usedFingerprints.has(fingerprint) ||
+          conflictKeys.has(fingerprint)
+        ) {
+          continue;
+        }
+
+        return {
+          id: `eq-${usedTexts.size + 1}`,
+          a,
+          b,
+          c,
+          operator
+        };
+      }
+
+      return null;
+    }
+
+    function generateEquations() {
+      const operatorPlan = shuffle(["+", "-", "*", "/"]).slice(0, GAME_SIZE);
+      let generationAttempts = 0;
+
+      while (generationAttempts < 60) {
+        generationAttempts += 1;
+
+        const equations = [];
+        const usedTexts = new Set();
+        const usedFingerprints = new Set();
+        const usedNumbers = new Set();
+        let failed = false;
+
+        for (const operator of operatorPlan) {
+          const conflictKeys = buildConflictKeySet(equations);
+          const equation = createEquation(
+            operator,
+            usedTexts,
+            usedFingerprints,
+            conflictKeys,
+            usedNumbers
+          );
+
+          if (!equation) {
+            failed = true;
+            break;
+          }
+
+          equations.push(equation);
+          usedTexts.add(`${equation.a}${equation.operator}${equation.b}=${equation.c}`);
+          usedFingerprints.add([equation.a, equation.operator, equation.b, equation.c].join("|"));
+          usedNumbers.add(equation.a);
+          usedNumbers.add(equation.b);
+          usedNumbers.add(equation.c);
+        }
+
+        if (!failed) {
+          return equations;
+        }
+      }
+
+      throw new Error("题目生成失败，请重新开始一局。");
+    }
+
+    function buildTokenPool(equations) {
+      const tokens = [];
+      let tokenIndex = 0;
+
+      equations.forEach((equation) => {
+        const values = [
+          String(equation.a),
+          equation.operator,
+          String(equation.b),
+          String(equation.c)
+        ];
+
+        values.forEach((value) => {
+          tokenIndex += 1;
+          tokens.push({
+            id: `token-${tokenIndex}`,
+            value,
+            equationId: equation.id,
+            removed: false
+          });
+        });
+      });
+
+      return shuffle(tokens);
+    }
+
+    function startNewGame() {
+      state.equations = generateEquations();
+      state.initialTokenPool = buildTokenPool(state.equations);
+      state.tokenPool = state.initialTokenPool.map((token) => ({ ...token }));
+      state.selectedTokenIds = [];
+      state.clearedExpressions = [];
+      setMessage("新的一局开始了。", "success");
+      render();
+    }
+
+    function replayGame() {
+      if (state.initialTokenPool.length === 0) {
+        startNewGame();
+        return;
+      }
+
+      state.tokenPool = state.initialTokenPool.map((token) => ({ ...token, removed: false }));
+      state.selectedTokenIds = [];
+      state.clearedExpressions = [];
+      setMessage("已重玩这一局。", "success");
+      render();
+    }
+
+    function setMessage(text, type = "") {
+      void text;
+      void type;
+    }
+
+    function clearSelection(shouldRender = true) {
+      state.selectedTokenIds = [];
+      if (shouldRender) {
+        renderPool();
+        renderControls();
+      }
+    }
+
+    function getTokenById(tokenId) {
+      return state.tokenPool.find((token) => token.id === tokenId);
+    }
+
+    function getSelectedTokens() {
+      return state.selectedTokenIds
+        .map((tokenId) => getTokenById(tokenId))
+        .filter(Boolean);
+    }
+
+    function isValidSelectionShape(tokens) {
+      if (tokens.length !== 4) {
+        return false;
+      }
+
+      const [first, second, third, fourth] = tokens;
+      const firstNumber = Number(first.value);
+      const thirdNumber = Number(third.value);
+      const fourthNumber = Number(fourth.value);
+
+      return (
+        Number.isInteger(firstNumber) &&
+        OPERATORS.includes(second.value) &&
+        Number.isInteger(thirdNumber) &&
+        Number.isInteger(fourthNumber)
+      );
+    }
+
+    function buildExpressionFromTokens(tokens) {
+      if (!isValidSelectionShape(tokens)) {
+        return null;
+      }
+
+      const a = Number(tokens[0].value);
+      const operator = tokens[1].value;
+      const b = Number(tokens[2].value);
+      const c = Number(tokens[3].value);
+      const result = evaluateExpression(a, operator, b);
+
+      if (result !== c || !hasDistinctNumbers(a, b, c)) {
+        return null;
+      }
+
+      return { a, operator, b, c };
+    }
+
+    function removeTokens(tokenIds) {
+      state.tokenPool = state.tokenPool.map((token) => {
+        if (tokenIds.includes(token.id)) {
+          return { ...token, removed: true };
+        }
+        return token;
+      });
+    }
+
+    function restoreTokens(tokenIds) {
+      state.tokenPool = state.tokenPool.map((token) => {
+        if (tokenIds.includes(token.id)) {
+          return { ...token, removed: false };
+        }
+        return token;
+      });
+    }
+
+    function handleCompleteSelection() {
+      const selectedTokens = getSelectedTokens();
+      const expression = buildExpressionFromTokens(selectedTokens);
+
+      if (!expression) {
+        clearSelection(false);
+        setMessage("这几个不能组成正确式子。", "error");
+        render();
+        return;
+      }
+
+      const clearedRow = createClearedRow(state.selectedTokenIds);
+      removeTokens(state.selectedTokenIds);
+      state.clearedExpressions.push(clearedRow);
+      clearSelection(false);
+
+      if (state.tokenPool.every((token) => token.removed)) {
+        setMessage("全部消完了。", "success");
+      } else {
+        setMessage(`已消除：${equationToText(expression)}`, "success");
+      }
+
+      render();
+    }
+
+    function handleClearedRowClick(clearedRowId) {
+      const clearedRow = state.clearedExpressions.find((row) => row.id === clearedRowId);
+      if (!clearedRow) {
+        return;
+      }
+
+      const shouldUndo = window.confirm("是否撤销这条已拼好的算式？");
+      if (!shouldUndo) {
+        return;
+      }
+
+      state.clearedExpressions = state.clearedExpressions.filter((row) => row.id !== clearedRowId);
+      restoreTokens(clearedRow.tokenIds);
+      render();
+    }
+
+    function handleTokenClick(tokenId) {
+      const token = getTokenById(tokenId);
+      if (!token || token.removed) {
+        return;
+      }
+
+      if (state.selectedTokenIds.includes(tokenId)) {
+        state.selectedTokenIds = state.selectedTokenIds.filter((selectedId) => selectedId !== tokenId);
+        renderPool();
+        renderControls();
+        return;
+      }
+
+      if (state.selectedTokenIds.length >= 4) {
+        return;
+      }
+
+      state.selectedTokenIds = [...state.selectedTokenIds, tokenId];
+      renderPool();
+      renderControls();
+
+      if (state.selectedTokenIds.length === 4) {
+        handleCompleteSelection();
+      }
+    }
+
+    function renderPool() {
+      elements.pool.innerHTML = "";
+
+      state.tokenPool.forEach((token) => {
+        const tokenButton = document.createElement("button");
+        tokenButton.type = "button";
+        tokenButton.className = "token";
+        tokenButton.textContent = token.value;
+
+        if (state.selectedTokenIds.includes(token.id)) {
+          tokenButton.classList.add("selected");
+        }
+
+        if (token.removed) {
+          tokenButton.classList.add("removed");
+          tokenButton.disabled = true;
+        } else {
+          tokenButton.addEventListener("click", () => handleTokenClick(token.id));
+        }
+
+        elements.pool.appendChild(tokenButton);
+      });
+    }
+
+    function renderClearedRows() {
+      elements.clearedRows.innerHTML = "";
+
+      state.clearedExpressions.forEach((rowData) => {
+        const row = document.createElement("div");
+        row.className = "cleared-row is-clickable";
+        row.addEventListener("click", () => handleClearedRowClick(rowData.id));
+
+        rowData.values.forEach((value) => {
+          const token = document.createElement("div");
+          token.className = "token static success-row";
+          token.textContent = value;
+          row.appendChild(token);
+        });
+
+        elements.clearedRows.appendChild(row);
+      });
+    }
+
+    function renderControls() {
+      elements.replayButton.disabled = state.initialTokenPool.length === 0;
+      elements.clearSelectionButton.disabled = state.selectedTokenIds.length === 0;
+      elements.installButton.classList.toggle("is-available", Boolean(state.deferredInstallPrompt));
+      elements.installButton.classList.toggle("is-hidden", state.isInstalledApp);
+    }
+
+    function render() {
+      renderClearedRows();
+      renderPool();
+      renderControls();
+    }
+
+    async function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) {
+        return;
+      }
+
+      const protocol = window.location.protocol;
+      const isLocalFile = protocol === "file:";
+      if (isLocalFile) {
+        return;
+      }
+
+      try {
+        await navigator.serviceWorker.register("./sw.js");
+      } catch (error) {
+        console.warn("Service worker 注册失败：", error);
+      }
+    }
+
+    async function handleInstallClick() {
+      if (state.isInstalledApp) {
+        return;
+      }
+
+      if (state.deferredInstallPrompt) {
+        setMessage("开始安装后，通常可以在 Launchpad、应用程序或 Dock 中找到它。");
+        state.deferredInstallPrompt.prompt();
+
+        try {
+          await state.deferredInstallPrompt.userChoice;
+        } catch (error) {
+          console.warn("安装流程未完成：", error);
+        }
+
+        state.deferredInstallPrompt = null;
+        renderControls();
+        return;
+      }
+
+      const protocol = window.location.protocol;
+      if (protocol === "file:") {
+        setMessage("请通过本地静态服务打开后再安装，例如 http://localhost。安装后通常可在 Launchpad、应用程序或 Dock 中找到。");
+        return;
+      }
+
+      setMessage("当前浏览器没有直接提供安装弹窗。可在浏览器菜单中查找“安装”或“添加到主屏幕”。安装后通常可在 Launchpad、应用程序或 Dock 中找到。");
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      state.deferredInstallPrompt = event;
+      renderControls();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      state.deferredInstallPrompt = null;
+      state.isInstalledApp = true;
+      renderControls();
+      setMessage("应用已安装。你现在通常可以在 Launchpad、应用程序或 Dock 中找到它。", "success");
+    });
+
+    function detectInstalledDisplayMode() {
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+
+      state.isInstalledApp = Boolean(isStandalone);
+      renderControls();
+    }
+
+    elements.newGameButton.addEventListener("click", startNewGame);
+    elements.replayButton.addEventListener("click", replayGame);
+    elements.clearSelectionButton.addEventListener("click", () => {
+      clearSelection();
+      setMessage("已清空当前选择。");
+    });
+    elements.installButton.addEventListener("click", handleInstallClick);
+
+    startNewGame();
+    registerServiceWorker();
+    detectInstalledDisplayMode();
+    window.matchMedia("(display-mode: standalone)").addEventListener("change", detectInstalledDisplayMode);
+  </script>
+</body>
+</html>

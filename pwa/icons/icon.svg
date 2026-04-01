@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">一算一算图标</title>
+  <desc id="desc">白底黑字的极简数学拼装游戏图标。</desc>
+  <rect width="128" height="128" rx="28" fill="#ffffff"/>
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="none" stroke="#111111" stroke-width="4"/>
+  <path d="M30 44h24" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M42 32v24" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M74 38h24" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M30 86h24" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M74 74l24 24" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M98 74L74 98" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+</svg>
