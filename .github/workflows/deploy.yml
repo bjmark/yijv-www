@@ -36,3 +36,8 @@ jobs:
           BRANCH: main
           REMOTE_SITE_DIR: /var/www/yijv_www
         run: ./deploy-www-site.sh
+
+      - name: Verify live site
+        run: |
+          curl --fail --silent --show-error --location https://www.yijvyijv.site >/dev/null
+          curl --fail --silent --show-error --location https://www.yijvyijv.site/privacy.html >/dev/null
