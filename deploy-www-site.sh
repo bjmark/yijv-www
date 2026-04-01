@@ -5,27 +5,27 @@ SERVER_HOST="${YIJV_SERVER_HOST:-yijv-server}"
 APEX_DOMAIN="${YIJV_APEX_DOMAIN:-yijvyijv.site}"
 WWW_DOMAIN="${YIJV_WWW_DOMAIN:-www.yijvyijv.site}"
 UPSTREAM_PORT="${YIJV_HTTPS_UPSTREAM_PORT:-3000}"
-LOCAL_SITE_DIR="${LOCAL_SITE_DIR:-.}"
+REPO_DIR="${REPO_DIR:-/home/ubuntu/repos/YiJv-www}"
+BRANCH="${BRANCH:-main}"
 REMOTE_SITE_DIR="${REMOTE_SITE_DIR:-/var/www/yijv_www}"
 CERT_DIR="${CERT_DIR:-/etc/letsencrypt/live/${APEX_DOMAIN}}"
 
-if [[ ! -f "${LOCAL_SITE_DIR}/index.html" ]]; then
-  echo "missing ${LOCAL_SITE_DIR}/index.html" >&2
-  exit 1
-fi
-
-TMP_TAR="$(mktemp)"
-trap 'rm -f "${TMP_TAR}"' EXIT
-
-tar -C "${LOCAL_SITE_DIR}" -cf "${TMP_TAR}" .
-scp "${TMP_TAR}" "${SERVER_HOST}:/tmp/yijv_www_site.tar"
-
 ssh "${SERVER_HOST}" \
-  "REMOTE_SITE_DIR='${REMOTE_SITE_DIR}' APEX_DOMAIN='${APEX_DOMAIN}' WWW_DOMAIN='${WWW_DOMAIN}' UPSTREAM_PORT='${UPSTREAM_PORT}' CERT_DIR='${CERT_DIR}' bash -s" <<'EOS'
+  "REPO_DIR='${REPO_DIR}' BRANCH='${BRANCH}' REMOTE_SITE_DIR='${REMOTE_SITE_DIR}' APEX_DOMAIN='${APEX_DOMAIN}' WWW_DOMAIN='${WWW_DOMAIN}' UPSTREAM_PORT='${UPSTREAM_PORT}' CERT_DIR='${CERT_DIR}' bash -s" <<'EOS'
 set -euo pipefail
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
+
+if [[ ! -d "${REPO_DIR}/.git" ]]; then
+  echo "missing git repo at ${REPO_DIR}" >&2
+  exit 1
+fi
+
+cd "${REPO_DIR}"
+git fetch origin
+git checkout "${BRANCH}"
+git pull --ff-only origin "${BRANCH}"
 
 cat > "${TMP_DIR}/www.conf" <<NGINX
 server {
@@ -103,9 +103,11 @@ if ! sudo test -f "${CERT_DIR}/fullchain.pem" || ! sudo test -f "${CERT_DIR}/pri
 fi
 
 sudo mkdir -p "${REMOTE_SITE_DIR}"
-sudo tar -C "${REMOTE_SITE_DIR}" -xf /tmp/yijv_www_site.tar
+sudo rsync -av --delete \
+  --exclude '.git' \
+  --exclude '.gitignore' \
+  "${REPO_DIR}/" "${REMOTE_SITE_DIR}/"
 sudo chown -R www-data:www-data "${REMOTE_SITE_DIR}"
-rm -f /tmp/yijv_www_site.tar
 
 sudo cp "${TMP_DIR}/www.conf" /etc/nginx/sites-available/yijv_www
 
@@ -117,5 +119,5 @@ sudo ln -sf /etc/nginx/sites-available/yijv_www /etc/nginx/sites-enabled/yijv_ww
 sudo nginx -t
 sudo systemctl reload nginx
 
-echo "[www-site] deployed to ${WWW_DOMAIN}"
+echo "[www-site] deployed ${BRANCH} from ${REPO_DIR} to ${WWW_DOMAIN}"
 EOS
